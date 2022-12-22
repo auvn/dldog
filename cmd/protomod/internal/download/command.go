@@ -12,7 +12,7 @@ var _flags struct {
 }
 
 var Cmd = cli.Command{
-	Name: "import",
+	Name: "download",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:        "config",

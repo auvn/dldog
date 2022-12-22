@@ -5,19 +5,15 @@ import (
 	"os"
 
 	"github.com/urfave/cli/v2"
-)
 
-var _flags struct {
-	Import struct {
-		Config string
-	}
-}
+	"github.com/auvn/dldog/cmd/protomod/internal/download"
+)
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "protomod"
+	app.Name = "dldog"
 	app.Commands = []*cli.Command{
-		&_import,
+		&download.Cmd,
 	}
 
 	if err := app.Run(os.Args); err != nil {
