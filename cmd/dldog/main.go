@@ -6,7 +6,7 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"github.com/auvn/dldog/cmd/protomod/internal/download"
+	"github.com/auvn/dldog/cmd/dldog/internal/download"
 )
 
 func main() {
