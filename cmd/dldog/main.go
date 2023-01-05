@@ -7,6 +7,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/auvn/dldog/cmd/dldog/internal/download"
+	"github.com/auvn/dldog/internal/fsext"
 )
 
 func main() {
@@ -14,6 +15,14 @@ func main() {
 	app.Name = "dldog"
 	app.Commands = []*cli.Command{
 		&download.Cmd,
+	}
+
+	app.Flags = []cli.Flag{
+		&cli.BoolFlag{
+			Name:        "keep-temp-files",
+			Required:    false,
+			Destination: &fsext.KeepTempFiles,
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {

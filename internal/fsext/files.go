@@ -7,8 +7,9 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
-	"go.uber.org/multierr"
 )
+
+var KeepTempFiles = false
 
 func TempDir(name string) (string, func()) {
 	dir, err := os.MkdirTemp("", name)
@@ -16,14 +17,21 @@ func TempDir(name string) (string, func()) {
 		log.Fatal(err)
 	}
 
-	rm := func() {
-		_ = os.RemoveAll(dir)
-	}
-
+	rm := func() { removeTempAll(dir) }
 	return dir, rm
 }
 
-func CopyFile(src, dst string) error {
+func TempFile(name string) (string, func()) {
+	f, err := os.CreateTemp("", name)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	rm := func() { removeTempFile(f.Name()) }
+	return f.Name(), rm
+}
+
+func CopyFile(dst, src string) error {
 	srcf, err := os.Open(src)
 	if err != nil {
 		return errors.WithMessage(err, "os.Open")
@@ -31,6 +39,10 @@ func CopyFile(src, dst string) error {
 
 	defer srcf.Close()
 
+	return ReadToFile(dst, srcf)
+}
+
+func ReadToFile(dst string, f io.Reader) error {
 	if err := MkdirAll(filepath.Dir(dst)); err != nil {
 		return errors.WithMessage(err, "MkdirAll")
 	}
@@ -42,7 +54,7 @@ func CopyFile(src, dst string) error {
 
 	defer dstf.Close()
 
-	if _, err = io.Copy(dstf, srcf); err != nil {
+	if _, err = io.Copy(dstf, f); err != nil {
 		return errors.WithMessage(err, "io.Copy")
 	}
 
@@ -53,52 +65,18 @@ func MkdirAll(dir string) error {
 	return os.MkdirAll(dir, 0o755)
 }
 
-type Syncer struct {
-	SrcDir       string
-	DstDir       string
-	Patterns     []string
-	SkipPatterns []string
+func removeTempAll(dir string) {
+	if KeepTempFiles {
+		return
+	}
+
+	_ = os.RemoveAll(dir)
 }
 
-func (s *Syncer) Sync() error {
-	var syncerr error
-	for _, target := range s.Patterns {
-		pattern := filepath.Join(s.SrcDir, target)
-		files, err := filepath.Glob(pattern)
-		if err != nil {
-			multierr.Append(syncerr,
-				errors.WithMessagef(err, "filepath.Glob(%q)", pattern))
-			continue
-		}
-
-		for _, src := range files {
-			relpath, _ := filepath.Rel(s.SrcDir, src)
-			if s.skip(relpath) {
-				continue
-			}
-
-			dst := filepath.Join(s.DstDir, relpath)
-			if err := CopyFile(src, dst); err != nil {
-				multierr.Append(syncerr,
-					errors.WithMessage(err, "fsext.CopyFile"))
-				continue
-			}
-		}
+func removeTempFile(f string) {
+	if KeepTempFiles {
+		return
 	}
 
-	if syncerr != nil {
-		return syncerr
-	}
-
-	return nil
-}
-
-func (s *Syncer) skip(path string) bool {
-	for i := range s.SkipPatterns {
-		if ok, _ := filepath.Match(s.SkipPatterns[i], path); ok {
-			return true
-		}
-	}
-
-	return false
+	_ = os.RemoveAll(f)
 }

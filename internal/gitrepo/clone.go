@@ -1,7 +1,6 @@
 package gitrepo
 
 import (
-	"log"
 	"reflect"
 	"regexp"
 
@@ -39,8 +38,6 @@ func Clone(dir string, desc Desc, opts ...Option) error {
 	if err != nil {
 		return errors.WithMessage(err, "prepareClone")
 	}
-
-	log.Printf("Cloning %q into %q...\n", desc.Url, dir)
 
 	repo, err := git.PlainClone(dir, false, &cloneOpts)
 	if err != nil {

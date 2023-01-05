@@ -15,6 +15,7 @@ type DownloadItem struct {
 		ArchiveUrl *struct {
 			Url    string
 			Format string
+			Cwd    string
 			Files  []string
 		}
 		FileUrl string
